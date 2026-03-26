@@ -15,6 +15,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
         await user.save({ validateBeforeSave: false })
         return { accessToken, refreshToken }
     } catch (error) {
+        console.log("ACTUAL ERROR:", error)
         throw new ApiError(500, "Something went wrong while generating tokens", [])
     }
 }
@@ -73,7 +74,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
     const { email, password, username } = req.body
 
-    if (!username && !email) {
+    if (!username || !email) {
         throw new ApiError(400, "Email or username is required", [])
     }
 
