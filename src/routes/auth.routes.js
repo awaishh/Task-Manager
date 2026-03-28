@@ -13,13 +13,13 @@ router.route("/verify-email/:verificationToken").get(verifyEmail)
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/forgot-password").post(userForgotPasswordValidator(),validate,forgotPasswordRequest)
 router.route("/reset-password/:resetToken").post(userResetForgotPasswordValidator(),validate,resetForgotPassword)
-
+router.route("/resend-email-verification").post(resendEmailVerification)
 
 
 //secured route
 router.route('/logout').post(verifyJWT,logoutUser)
 router.route('/current-user').get(verifyJWT,getCurrentUser)
 router.route('/change-password').post(verifyJWT,userChangeCurrentPasswordValidator(),validate,changeCurrentPassword)
-router.route("/resend-email-verification").post(verifyJWT,resendEmailVerification)
+
 
 export default router
