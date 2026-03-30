@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 
@@ -9,8 +9,12 @@ export default function VerifyEmail() {
   const [message, setMessage] = useState('')
   const [resending, setResending] = useState(false)
   const [resendMsg, setResendMsg] = useState('')
+  const [email, setEmail] = useState('')
+  const called = useRef(false)
 
   useEffect(() => {
+    if (called.current) return
+    called.current = true
     api.get(`/auth/verify-email/${verificationToken}`)
       .then(res => {
         setStatus('success')
@@ -24,13 +28,17 @@ export default function VerifyEmail() {
   }, [verificationToken])
 
   const handleResend = async () => {
+    if (!email) {
+      setResendMsg('Please enter your email address.')
+      return
+    }
     setResending(true)
     setResendMsg('')
     try {
-      await api.post('/auth/resend-email-verification')
-      setResendMsg('A new verification email has been sent. Please check your inbox.')
+      await api.post('/auth/resend-email-verification', { email })
+      setResendMsg('A new verification email has been sent. Check your inbox.')
     } catch (err) {
-      setResendMsg(err.response?.data?.message || 'Could not resend. Please log in first.')
+      setResendMsg(err.response?.data?.message || 'Could not resend. Try again.')
     } finally {
       setResending(false)
     }
@@ -72,13 +80,23 @@ export default function VerifyEmail() {
               </div>
               <h1 className="font-headline text-3xl text-stone-900 mt-2">Link Expired</h1>
               <p className="mt-3 text-sm text-stone-500">{message}</p>
-              <p className="mt-1 text-xs text-stone-400">Verification links expire after 20 minutes.</p>
+              <p className="mt-1 text-xs text-stone-400">The link may have already been used or expired after 20 minutes.</p>
               {resendMsg ? (
                 <div className="mt-5 px-4 py-3 rounded-lg bg-green-50 text-green-800 text-sm">{resendMsg}</div>
               ) : (
-                <button onClick={handleResend} disabled={resending} className="mt-6 inline-flex items-center gap-2 text-white px-6 py-3 rounded-lg font-medium text-sm hover:opacity-90 transition-all disabled:opacity-60" style={{ background: 'linear-gradient(to right, #5300b7, #6d28d9)' }}>
-                  {resending ? <><span className="material-symbols-outlined text-base animate-spin">progress_activity</span> Sending...</> : <><span className="material-symbols-outlined text-base">mark_email_unread</span> Resend Verification Email</>}
-                </button>
+                <div className="mt-6 space-y-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="Enter your email to resend"
+                    className="w-full px-4 py-3 rounded-lg border border-stone-200 text-sm focus:outline-none"
+                    style={{ backgroundColor: '#f3f3f4', color: '#1a1c1c' }}
+                  />
+                  <button onClick={handleResend} disabled={resending} className="w-full inline-flex items-center justify-center gap-2 text-white px-6 py-3 rounded-lg font-medium text-sm hover:opacity-90 transition-all disabled:opacity-60" style={{ background: 'linear-gradient(to right, #5300b7, #6d28d9)' }}>
+                    {resending ? <><span className="material-symbols-outlined text-base animate-spin">progress_activity</span> Sending...</> : <><span className="material-symbols-outlined text-base">mark_email_unread</span> Resend Verification Email</>}
+                  </button>
+                </div>
               )}
               <div className="mt-4">
                 <Link to="/login" className="text-xs text-stone-400 hover:text-stone-600 transition-colors">← Back to Sign In</Link>
