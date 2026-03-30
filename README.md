@@ -7,7 +7,7 @@ A full-stack project management application built with Node.js, Express, MongoDB
 ## Folder Structure
 
 ```
-udemybackend/
+prose-and-process/
 ├── backend/
 │   ├── public/
 │   │   └── temp/                  # Temporary file uploads (multer)
