@@ -1,13 +1,13 @@
 {
-  "name": "backend",
+  "name": "prose-and-process-backend",
   "version": "1.0.0",
-  "description": "A project management application for beginners",
+  "description": "Backend for Prose & Process — a strategic project management application",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js"
   },
-  "author": "",
+  "author": "Awaish",
   "license": "ISC",
   "devDependencies": {
     "nodemon": "^3.1.14",
