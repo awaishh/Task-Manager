@@ -26,7 +26,7 @@ export default function Landing() {
       <section style={{ maxWidth: 1280, margin: '0 auto', padding: '80px 24px 60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
         <div>
           <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: PURPLE, marginBottom: 20 }}>
-            Strategic Project Management
+            
           </span>
           <h1 style={{ fontFamily: 'Newsreader, serif', fontSize: 'clamp(42px, 5vw, 72px)', lineHeight: 1.05, fontWeight: 600, margin: '0 0 24px', color: '#1a1c1c' }}>
             The Art of Process<br />meets the Depth of Prose.</h1>
