@@ -29,9 +29,7 @@ export default function Landing() {
             Strategic Project Management
           </span>
           <h1 style={{ fontFamily: 'Newsreader, serif', fontSize: 'clamp(42px, 5vw, 72px)', lineHeight: 1.05, fontWeight: 600, margin: '0 0 24px', color: '#1a1c1c' }}>
-            The Art of Process<br />meets the{' '}
-            <span style={{ fontStyle: 'italic', fontWeight: 400 }}>Depth of Prose.</span>
-          </h1>
+            The Art of Process<br />meets the Depth of Prose.</h1>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: '#4a4455', maxWidth: 480, margin: '0 0 36px' }}>
             A curated workspace for high-stakes narratives and long-form strategy. Manage the architecture of your ideas with the precision of an editor.
           </p>
@@ -84,8 +82,8 @@ export default function Landing() {
         <div style={{ textAlign: 'center', marginBottom: 64 }}>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: PURPLE }}>How It Works</span>
           <h2 style={{ fontFamily: 'Newsreader, serif', fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 600, margin: '12px 0 0', color: '#1a1c1c' }}>
-            Built for the way<br />
-            <span style={{ fontStyle: 'italic', fontWeight: 400 }}>strategists think.</span>
+            Built for the way<br />strategists think.
+            
           </h2>
         </div>
 
