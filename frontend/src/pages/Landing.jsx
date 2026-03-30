@@ -281,6 +281,11 @@ export default function Landing() {
             <Link to="/register" style={{ fontSize: 13, color: '#d3bbff', textDecoration: 'none', fontWeight: 600 }}>Get Started →</Link>
           </div>
         </div>
+        <div style={{ maxWidth: 1280, margin: '24px auto 0', paddingTop: 24, borderTop: '1px solid #2f3131', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, color: '#4a4455', margin: 0 }}>
+            Built with ❤️ by <span style={{ color: '#d3bbff', fontWeight: 600 }}>Awaish</span>
+          </p>
+        </div>
       </footer>
 
     </div>
