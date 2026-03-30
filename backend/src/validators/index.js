@@ -75,10 +75,44 @@ const userResetForgotPasswordValidator = ()=>{
     ]
 }
 
+const createProjectValidator = () => {
+    return [
+        body("name").trim().notEmpty().withMessage("Project name is required"),
+        body("description").trim().notEmpty().withMessage("Project description is required"),
+    ];
+};
+
+const addMemberValidator = () => {
+    return [
+        body("email").isEmail().withMessage("Valid email is required"),
+        body("role").optional().isIn(["admin", "project-admin", "member"]).withMessage("Invalid role"),
+    ];
+};
+
+const createTaskValidator = () => {
+    return [
+        body("title").trim().notEmpty().withMessage("Task title is required"),
+        body("description").optional().trim(),
+        body("assignedTo").optional().isMongoId().withMessage("Invalid assignedTo user ID"),
+        body("status").optional().isIn(["todo", "in-progress", "done"]).withMessage("Invalid status"),
+    ];
+};
+
+const createNoteValidator = () => {
+    return [
+        body("title").trim().notEmpty().withMessage("Note title is required"),
+        body("content").trim().notEmpty().withMessage("Note content is required"),
+    ];
+};
+
 export {
     userRegisterValidator,
     userLoginValidator,
     userChangeCurrentPasswordValidator,
     userForgotPasswordValidator,
-    userResetForgotPasswordValidator
+    userResetForgotPasswordValidator,
+    createProjectValidator,
+    addMemberValidator,
+    createTaskValidator,
+    createNoteValidator
 }
