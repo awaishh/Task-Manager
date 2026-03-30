@@ -31,7 +31,7 @@ app.use("/api/v1/tasks", taskRouter)
 app.use("/api/v1/notes", noteRouter)
 
 app.get('/',(req,res)=>{
-    res.send("Welcome to backend series")
+    res.send("Prose & Process API — v1.0.0")
 })
 
 // Global error handler

@@ -274,8 +274,8 @@ export default function Landing() {
             <p style={{ fontSize: 12, color: '#7b7486', margin: '6px 0 0' }}>© 2026 All rights reserved.</p>
           </div>
           <div style={{ display: 'flex', gap: 28 }}>
-            {['Privacy', 'Terms', 'Support'].map(link => (
-              <a key={link} href="#" style={{ fontSize: 13, color: '#7b7486', textDecoration: 'none' }}>{link}</a>
+            {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Support', '/support']].map(([label, to]) => (
+              <Link key={label} to={to} style={{ fontSize: 13, color: '#7b7486', textDecoration: 'none' }}>{label}</Link>
             ))}
             <Link to="/login" style={{ fontSize: 13, color: '#d3bbff', textDecoration: 'none' }}>Sign In</Link>
             <Link to="/register" style={{ fontSize: 13, color: '#d3bbff', textDecoration: 'none', fontWeight: 600 }}>Get Started →</Link>
