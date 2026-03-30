@@ -11,10 +11,10 @@ app.use(cookieParser())
 
 //Cors configuration for express app
 app.use(cors({
-    origin:process.env.CORS_ORIGIN?.split(",") || "http://localhost:5173",
-    credentials:true,
-    methods: ["GET","POST","PUT","PATCH","OPTIONS"],
-    allowedHeaders:["Content-Type","Authorization"]
+    origin: process.env.CORS_ORIGIN === '*' ? true : process.env.CORS_ORIGIN?.split(","),
+    credentials: true,
+    methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+    allowedHeaders: ["Content-Type","Authorization"]
 }))
 
 //import the routes
@@ -32,6 +32,18 @@ app.use("/api/v1/notes", noteRouter)
 
 app.get('/',(req,res)=>{
     res.send("Welcome to backend series")
+})
+
+// Global error handler
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500
+    const message = err.message || "Internal Server Error"
+    return res.status(statusCode).json({
+        statusCode,
+        message,
+        success: false,
+        errors: err.errors || []
+    })
 })
 
 

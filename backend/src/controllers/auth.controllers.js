@@ -50,7 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
         subject: "Email Verification",
         mailgenContent: emailVerificationMailgenContent(
             user.username,
-            `${req.protocol}://${req.get('host')}/api/v1/users/verify-email/${unHashedToken}`
+            `${process.env.FRONTEND_URL}/verify-email/${unHashedToken}`
         ),
     })
 
@@ -74,7 +74,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
     const { email, password, username } = req.body
 
-    if (!username || !email) {
+    if (!username && !email) {
         throw new ApiError(400, "Email or username is required", [])
     }
 
@@ -101,7 +101,7 @@ const login = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === 'production'
     }
 
     return res
@@ -132,7 +132,7 @@ const logoutUser = asyncHandler(async(req,res)=>{
 
     const options = {
         httpOnly:true,
-        secure:true
+        secure: process.env.NODE_ENV === 'production'
     }
     return res.status(200).clearCookie("accessToken",options).clearCookie("refreshToken",options).json(new ApiResponse(200,{},"User logged out"))
 })
@@ -192,7 +192,7 @@ const resendEmailVerification = asyncHandler(async(req,res)=>{
         subject: "Email Verification",
         mailgenContent: emailVerificationMailgenContent(
             user.username,
-            `${req.protocol}://${req.get('host')}/api/v1/users/verify-email/${unHashedToken}`
+            `${process.env.FRONTEND_URL}/verify-email/${unHashedToken}`
         ),
     })
 
@@ -220,7 +220,7 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
 
         const options = {
             httpOnly:true,
-            secure:true
+            secure: process.env.NODE_ENV === 'production'
         }
 
         const {accessToken,refreshToken:newRefreshToken} = await generateAccessAndRefreshTokens(user._id)

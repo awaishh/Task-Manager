@@ -15,9 +15,10 @@ const getNotes = asyncHandler(async (req, res) => {
 
 const createNote = asyncHandler(async (req, res) => {
     const { projectId } = req.params;
-    const { content } = req.body;
+    const { title, content } = req.body;
 
     const note = await ProjectNote.create({
+        title,
         content,
         project: projectId,
         createdBy: req.user._id
@@ -43,11 +44,11 @@ const getNoteById = asyncHandler(async (req, res) => {
 
 const updateNote = asyncHandler(async (req, res) => {
     const { noteId } = req.params;
-    const { content } = req.body;
+    const { title, content } = req.body;
 
     const note = await ProjectNote.findByIdAndUpdate(
         noteId,
-        { $set: { content } },
+        { $set: { title, content } },
         { new: true }
     );
 

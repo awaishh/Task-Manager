@@ -60,7 +60,7 @@ const getProjectById = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(
-        new ApiResponse(200, { ...project._doc, role: member.role }, "Project details fetched successfully")
+        new ApiResponse(200, { ...project.toObject(), role: member.role }, "Project details fetched successfully")
     );
 });
 

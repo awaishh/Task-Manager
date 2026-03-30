@@ -33,15 +33,13 @@ const userRegisterValidator = () => {
 const userLoginValidator = () => {
     return [
         body("email")
+            .optional()
             .trim()
-            .notEmpty()
-            .withMessage("Email is required")
             .isEmail()
             .withMessage("Email is invalid"),
         body("username")
+            .optional()
             .trim()
-            .notEmpty()
-            .withMessage("Username is required")
             .isLowercase()
             .withMessage("Username must be in lower case"),
         body("password")
