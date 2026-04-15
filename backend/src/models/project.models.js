@@ -16,6 +16,11 @@ const projectSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:"User",
         required:true
+    },
+    joinCode: {
+        type:String,
+        unique:true,
+        sparse:true
     }
 },{timestamps:true})
 

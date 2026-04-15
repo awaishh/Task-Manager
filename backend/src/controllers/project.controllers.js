@@ -5,6 +5,7 @@ import { ApiResponse } from '../utils/api-response.js'
 import { ApiError } from '../utils/api-error.js'
 import { asyncHandler } from '../utils/async-handler.js'
 import mongoose from "mongoose"
+import QRCode from 'qrcode'
 
 
 const getProjects = asyncHandler(async (req, res) => {
@@ -226,6 +227,104 @@ const removeMemberFromProject = asyncHandler(async (req, res) => {
     );
 });
 
+const generateProjectQRCode = asyncHandler(async (req, res) => {
+    const { projectId } = req.params;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+        throw new ApiError(404, "Project not found");
+    }
+
+    // Check if user is a member
+    const member = await ProjectMember.findOne({
+        project: projectId,
+        user: req.user._id
+    });
+
+    if (!member) {
+        throw new ApiError(403, "You are not a member of this project");
+    }
+
+    // Generate a unique join code if not exists
+    if (!project.joinCode) {
+        project.joinCode = `JOIN_${projectId}_${Date.now()}`;
+        await project.save();
+    }
+
+    // Create join URL
+    const joinUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/join/${project.joinCode}`;
+
+    // Generate QR code as base64
+    const qrCodeDataUrl = await QRCode.toDataURL(joinUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+            dark: '#5300b7',  // Your primary purple
+            light: '#ffffff'
+        }
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            qrCode: qrCodeDataUrl,
+            joinCode: project.joinCode,
+            joinUrl: joinUrl,
+            projectName: project.name
+        }, "QR code generated successfully")
+    );
+});
+
+const joinProjectByCode = asyncHandler(async (req, res) => {
+    const { joinCode } = req.params;
+
+    if (!joinCode) {
+        throw new ApiError(400, "Join code is required");
+    }
+
+    const project = await Project.findOne({ joinCode });
+    if (!project) {
+        throw new ApiError(404, "Invalid join code");
+    }
+
+    // Check if already a member
+    const existingMember = await ProjectMember.findOne({
+        project: project._id,
+        user: req.user._id
+    });
+
+    if (existingMember) {
+        throw new ApiError(409, "You are already a member of this project");
+    }
+
+    // Add user as member with default role
+    const member = await ProjectMember.create({
+        user: req.user._id,
+        project: project._id,
+        role: "member"
+    });
+
+    // Notify project room via socket
+    const io = req.app.get('io');
+    if (io) {
+        io.to(`project:${project._id}`).emit('user-joined-project', {
+            userId: req.user._id,
+            username: req.user.username,
+            joinedVia: 'qr-code'
+        });
+    }
+
+    return res.status(201).json(
+        new ApiResponse(201, {
+            project: {
+                _id: project._id,
+                name: project.name,
+                description: project.description
+            },
+            member
+        }, "Successfully joined project")
+    );
+});
+
 export {
     getProjects,
     getProjectById,
@@ -235,5 +334,7 @@ export {
     getProjectMembers,
     addMemberToProject,
     updateMemberRole,
-    removeMemberFromProject
+    removeMemberFromProject,
+    generateProjectQRCode,
+    joinProjectByCode
 };

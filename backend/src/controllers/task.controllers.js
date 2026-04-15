@@ -6,6 +6,9 @@ import { asyncHandler } from '../utils/async-handler.js';
 import { uploadToCloudinary } from '../utils/cloudinary.js';
 import mongoose from 'mongoose';
 
+// Helper to get Socket.IO instance
+const getIo = (req) => req.app.get('io');
+
 const getTasks = asyncHandler(async (req, res) => {
     const { projectId } = req.params;
 
@@ -43,6 +46,20 @@ const createTask = asyncHandler(async (req, res) => {
         attachments
     });
 
+    // Broadcast task creation to project room
+    const io = getIo(req);
+    if (io) {
+        const populatedTask = await Task.findById(task._id).populate("assignedTo", "username avatar");
+        io.to(`project:${projectId}`).emit('task-created', {
+            task: populatedTask,
+            createdBy: {
+                _id: req.user._id,
+                username: req.user.username
+            },
+            timestamp: new Date().toISOString()
+        });
+    }
+
     return res.status(201).json(
         new ApiResponse(201, task, "Task created successfully")
     );
@@ -79,6 +96,20 @@ const updateTask = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Task not found");
     }
 
+    // Broadcast task update to project room
+    const io = getIo(req);
+    if (io) {
+        io.to(`project:${task.project}`).emit('task-updated', {
+            taskId: task._id,
+            updates: { title, description, assignedTo, status },
+            updatedBy: {
+                _id: req.user._id,
+                username: req.user.username
+            },
+            timestamp: new Date().toISOString()
+        });
+    }
+
     return res.status(200).json(
         new ApiResponse(200, task, "Task updated successfully")
     );
@@ -93,6 +124,19 @@ const deleteTask = asyncHandler(async (req, res) => {
     }
 
     await Subtask.deleteMany({ task: taskId });
+
+    // Broadcast task deletion to project room
+    const io = getIo(req);
+    if (io) {
+        io.to(`project:${task.project}`).emit('task-deleted', {
+            taskId: task._id,
+            deletedBy: {
+                _id: req.user._id,
+                username: req.user.username
+            },
+            timestamp: new Date().toISOString()
+        });
+    }
 
     return res.status(200).json(
         new ApiResponse(200, {}, "Task deleted successfully")

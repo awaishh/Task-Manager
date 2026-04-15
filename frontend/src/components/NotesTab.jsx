@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import { getNotes, createNote, updateNote, deleteNote } from '../api/notes'
+import { useSocket } from '../context/SocketContext'
+import { getSocket } from '../socket/socket'
 
 export default function NotesTab({ projectId, role }) {
+  const { joinProject, leaveProject, isConnected } = useSocket()
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -22,6 +25,63 @@ export default function NotesTab({ projectId, role }) {
   }
 
   useEffect(() => { load() }, [projectId])
+
+  // Join project room for real-time updates
+  useEffect(() => {
+    if (isConnected && projectId) {
+      joinProject(projectId)
+    }
+
+    return () => {
+      if (projectId) {
+        leaveProject(projectId)
+      }
+    }
+  }, [isConnected, projectId, joinProject, leaveProject])
+
+  // Listen to real-time socket events
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleNoteCreated = (data) => {
+      console.log('📡 Real-time event: note-created', data)
+      setNotes(prev => [...prev, data.note])
+    }
+
+    const handleNoteUpdated = (data) => {
+      console.log('📡 Real-time event: note-updated', data)
+      setNotes(prev =>
+        prev.map(note =>
+          note._id === data.noteId
+            ? { ...note, ...data.updates }
+            : note
+        )
+      )
+    }
+
+    const handleNoteDeleted = (data) => {
+      console.log('📡 Real-time event: note-deleted', data)
+      setNotes(prev => prev.filter(note => note._id !== data.noteId))
+      if (deleteTarget?._id === data.noteId) {
+        setDeleteTarget(null)
+      }
+      if (editNote?._id === data.noteId) {
+        setModalOpen(false)
+        setEditNote(null)
+      }
+    }
+
+    socket.on('note-created', handleNoteCreated)
+    socket.on('note-updated', handleNoteUpdated)
+    socket.on('note-deleted', handleNoteDeleted)
+
+    return () => {
+      socket.off('note-created', handleNoteCreated)
+      socket.off('note-updated', handleNoteUpdated)
+      socket.off('note-deleted', handleNoteDeleted)
+    }
+  }, [projectId, deleteTarget, editNote])
 
   const openCreate = () => {
     setEditNote(null)

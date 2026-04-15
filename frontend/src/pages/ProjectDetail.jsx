@@ -5,14 +5,18 @@ import { getProjectById } from '../api/projects'
 import TasksTab from '../components/TasksTab'
 import NotesTab from '../components/NotesTab'
 import MembersTab from '../components/MembersTab'
+import ChatTab from '../components/ChatTab'
+import OnlineUsersBadge from '../components/OnlineUsersBadge'
+import QRCodeModal from '../components/QRCodeModal'
 
-const TABS = ['Tasks', 'Notes', 'Members']
+const TABS = ['Tasks', 'Notes', 'Members', 'Chat']
 
 export default function ProjectDetail() {
   const { projectId } = useParams()
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('Tasks')
+  const [qrModalOpen, setQrModalOpen] = useState(false)
 
   useEffect(() => {
     getProjectById(projectId)
@@ -73,15 +77,26 @@ export default function ProjectDetail() {
             <h1 className="font-headline text-4xl" style={{ color: '#1a1c1c' }}>{project.name}</h1>
             <p className="mt-2 max-w-2xl text-sm" style={{ color: '#4a4455' }}>{project.description}</p>
           </div>
-          {project.role === 'admin' && (
-            <Link
-              to={`/projects/${projectId}/settings`}
+          <div className="flex items-center gap-3">
+            <OnlineUsersBadge />
+            <button
+              onClick={() => setQrModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-200 text-sm text-stone-600 hover:bg-stone-50 transition-all"
+              title="Share QR Code"
             >
-              <span className="material-symbols-outlined text-base">settings</span>
-              Settings
-            </Link>
-          )}
+              <span className="material-symbols-outlined text-base">qr_code</span>
+              Share
+            </button>
+            {project.role === 'admin' && (
+              <Link
+                to={`/projects/${projectId}/settings`}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-200 text-sm text-stone-600 hover:bg-stone-50 transition-all"
+              >
+                <span className="material-symbols-outlined text-base">settings</span>
+                Settings
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -107,7 +122,17 @@ export default function ProjectDetail() {
           {tab === 'Tasks' && <TasksTab projectId={projectId} role={project.role} />}
           {tab === 'Notes' && <NotesTab projectId={projectId} role={project.role} />}
           {tab === 'Members' && <MembersTab projectId={projectId} role={project.role} />}
+          {tab === 'Chat' && <ChatTab projectId={projectId} role={project.role} />}
         </div>
+
+        {/* QR Code Modal */}
+        {qrModalOpen && (
+          <QRCodeModal
+            projectId={projectId}
+            projectName={project.name}
+            onClose={() => setQrModalOpen(false)}
+          />
+        )}
       </div>
     </Layout>
   )

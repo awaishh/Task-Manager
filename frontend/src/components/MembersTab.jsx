@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import { getMembers, addMember, updateMemberRole, removeMember } from '../api/projects'
+import { useSocket } from '../context/SocketContext'
 
 const ROLES = ['admin', 'project-admin', 'member']
 const roleColor = {
@@ -10,6 +11,7 @@ const roleColor = {
 }
 
 export default function MembersTab({ projectId, role }) {
+  const { onlineUsers } = useSocket()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -19,6 +21,9 @@ export default function MembersTab({ projectId, role }) {
   const [removeTarget, setRemoveTarget] = useState(null)
 
   const isAdmin = role === 'admin'
+
+  // Create a set of online user IDs for quick lookup
+  const onlineUserIds = new Set(onlineUsers.map(u => u._id))
 
   const load = () => {
     getMembers(projectId)
@@ -87,38 +92,54 @@ export default function MembersTab({ projectId, role }) {
         </div>
       ) : (
         <div className="space-y-2">
-          {members.map(member => (
-            <div key={member._id} className="bg-white rounded-xl border border-stone-100 shadow-sm p-4 flex items-center gap-4">
-              <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-sm font-bold uppercase shrink-0">
-                {member.username?.[0]}
+          {members.map(member => {
+            const isOnline = onlineUserIds.has(member._id)
+            return (
+              <div key={member._id} className="bg-white rounded-xl border border-stone-100 shadow-sm p-4 flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-sm font-bold uppercase shrink-0">
+                    {member.username?.[0]}
+                  </div>
+                  {/* Online indicator */}
+                  {isOnline && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-white"></div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-on-surface">{member.username}</p>
+                    {isOnline && (
+                      <span className="text-[9px] font-medium text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                        Online
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-400 truncate">{member.email}</p>
+                </div>
+                {isAdmin ? (
+                  <select
+                    value={member.role}
+                    onChange={e => handleRoleChange(member, e.target.value)}
+                    className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded border-none focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${roleColor[member.role]}`}
+                  >
+                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                ) : (
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${roleColor[member.role]}`}>
+                    {member.role}
+                  </span>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => setRemoveTarget(member)}
+                    className="p-1.5 text-stone-300 hover:text-error rounded-md transition-all"
+                  >
+                    <span className="material-symbols-outlined text-base">person_remove</span>
+                  </button>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-on-surface">{member.username}</p>
-                <p className="text-xs text-stone-400 truncate">{member.email}</p>
-              </div>
-              {isAdmin ? (
-                <select
-                  value={member.role}
-                  onChange={e => handleRoleChange(member, e.target.value)}
-                  className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded border-none focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${roleColor[member.role]}`}
-                >
-                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-              ) : (
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${roleColor[member.role]}`}>
-                  {member.role}
-                </span>
-              )}
-              {isAdmin && (
-                <button
-                  onClick={() => setRemoveTarget(member)}
-                  className="p-1.5 text-stone-300 hover:text-error rounded-md transition-all"
-                >
-                  <span className="material-symbols-outlined text-base">person_remove</span>
-                </button>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

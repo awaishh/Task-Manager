@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Modal from './Modal'
 import { getTasks, createTask, updateTask, deleteTask } from '../api/tasks'
 import TaskDetail from './TaskDetail'
+import { useSocket } from '../context/SocketContext'
+import { getSocket } from '../socket/socket'
 
 const STATUS_COLORS = {
   todo: 'bg-stone-100 text-stone-600',
@@ -12,6 +14,7 @@ const STATUS_ICONS = { todo: 'radio_button_unchecked', 'in-progress': 'pending',
 const STATUSES = ['todo', 'in-progress', 'done']
 
 export default function TasksTab({ projectId, role }) {
+  const { joinProject, leaveProject, isConnected } = useSocket()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -31,6 +34,63 @@ export default function TasksTab({ projectId, role }) {
   }
 
   useEffect(() => { load() }, [projectId])
+
+  // Join project room for real-time updates
+  useEffect(() => {
+    if (isConnected && projectId) {
+      joinProject(projectId)
+    }
+
+    return () => {
+      if (projectId) {
+        leaveProject(projectId)
+      }
+    }
+  }, [isConnected, projectId, joinProject, leaveProject])
+
+  // Listen to real-time socket events
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    // Task created
+    const handleTaskCreated = (data) => {
+      console.log('📡 Real-time event: task-created', data)
+      setTasks(prev => [...prev, data.task])
+    }
+
+    // Task updated
+    const handleTaskUpdated = (data) => {
+      console.log('📡 Real-time event: task-updated', data)
+      setTasks(prev =>
+        prev.map(task =>
+          task._id === data.taskId
+            ? { ...task, ...data.updates }
+            : task
+        )
+      )
+    }
+
+    // Task deleted
+    const handleTaskDeleted = (data) => {
+      console.log('📡 Real-time event: task-deleted', data)
+      setTasks(prev => prev.filter(task => task._id !== data.taskId))
+      if (selectedTask?._id === data.taskId) {
+        setSelectedTask(null)
+      }
+    }
+
+    socket.on('task-created', handleTaskCreated)
+    socket.on('task-updated', handleTaskUpdated)
+    socket.on('task-deleted', handleTaskDeleted)
+
+    // Cleanup listeners on unmount
+    return () => {
+      socket.off('task-created', handleTaskCreated)
+      socket.off('task-updated', handleTaskUpdated)
+      socket.off('task-deleted', handleTaskDeleted)
+    }
+  }, [projectId, selectedTask])
 
   const handleCreate = async (e) => {
     e.preventDefault()

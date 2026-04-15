@@ -3,6 +3,9 @@ import { ApiResponse } from '../utils/api-response.js';
 import { ApiError } from '../utils/api-error.js';
 import { asyncHandler } from '../utils/async-handler.js';
 
+// Helper to get Socket.IO instance
+const getIo = (req) => req.app.get('io');
+
 const getNotes = asyncHandler(async (req, res) => {
     const { projectId } = req.params;
 
@@ -23,6 +26,20 @@ const createNote = asyncHandler(async (req, res) => {
         project: projectId,
         createdBy: req.user._id
     });
+
+    // Broadcast note creation to project room
+    const io = getIo(req);
+    if (io) {
+        const populatedNote = await ProjectNote.findById(note._id).populate("createdBy", "username avatar");
+        io.to(`project:${projectId}`).emit('note-created', {
+            note: populatedNote,
+            createdBy: {
+                _id: req.user._id,
+                username: req.user.username
+            },
+            timestamp: new Date().toISOString()
+        });
+    }
 
     return res.status(201).json(
         new ApiResponse(201, note, "Note created successfully")
@@ -56,6 +73,20 @@ const updateNote = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Note not found");
     }
 
+    // Broadcast note update to project room
+    const io = getIo(req);
+    if (io) {
+        io.to(`project:${note.project}`).emit('note-updated', {
+            noteId: note._id,
+            updates: { title, content },
+            updatedBy: {
+                _id: req.user._id,
+                username: req.user.username
+            },
+            timestamp: new Date().toISOString()
+        });
+    }
+
     return res.status(200).json(
         new ApiResponse(200, note, "Note updated successfully")
     );
@@ -67,6 +98,19 @@ const deleteNote = asyncHandler(async (req, res) => {
     const note = await ProjectNote.findByIdAndDelete(noteId);
     if (!note) {
         throw new ApiError(404, "Note not found");
+    }
+
+    // Broadcast note deletion to project room
+    const io = getIo(req);
+    if (io) {
+        io.to(`project:${note.project}`).emit('note-deleted', {
+            noteId: note._id,
+            deletedBy: {
+                _id: req.user._id,
+                username: req.user.username
+            },
+            timestamp: new Date().toISOString()
+        });
     }
 
     return res.status(200).json(
